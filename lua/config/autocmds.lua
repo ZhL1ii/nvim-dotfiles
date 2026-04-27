@@ -5,6 +5,16 @@ local function set_indent(size, is_expandtab)
 	vim.opt_local.expandtab = is_expandtab
 end
 
+vim.filetype.add({
+	-- gopls 支持 gotmpl；显式注册后 LSP health 不再提示 unknown filetype。
+	extension = {
+		gotmpl = "gotmpl",
+	},
+	pattern = {
+		[".*%.go%.tmpl"] = "gotmpl",
+	},
+})
+
 -- alpha/dashboard 等特殊 buffer 会关闭当前窗口的行号；进入普通文件时恢复。
 vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter" }, {
 	pattern = "*",

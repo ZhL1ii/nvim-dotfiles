@@ -1,7 +1,8 @@
 return {
 	{
 		"mason-org/mason.nvim",
-		event = "VeryLazy",
+		-- mason-lspconfig 和 mason-tool-installer 都依赖 Mason 已完成 setup。
+		lazy = false,
 		opts = {
 			ui = {
 				icons = {

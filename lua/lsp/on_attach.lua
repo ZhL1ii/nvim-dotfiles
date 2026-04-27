@@ -12,11 +12,8 @@ function M.get()
 			})
 		end
 
-		local show_jump_diagnostic = function(diagnostic, jump_bufnr)
-			if not diagnostic then
-				return
-			end
-
+		local show_diagnostic_float = function(jump_bufnr)
+			-- 统一诊断浮窗入口，跳转诊断和手动查看保持同一套显示行为。
 			vim.diagnostic.open_float({
 				bufnr = jump_bufnr,
 				scope = "cursor",
@@ -33,28 +30,37 @@ function M.get()
 		-- 重构与动作
 		map("n", "<leader>cr", vim.lsp.buf.rename, "LSP: Rename")
 		map({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, "LSP: Code action")
+		-- Neovim 0.12 提供内置 :lsp 管理命令，方便在当前 buffer 重启/停止 server。
+		map("n", "<leader>cR", "<cmd>lsp restart<cr>", "LSP: Restart")
+		map("n", "<leader>cS", "<cmd>lsp stop<cr>", "LSP: Stop")
 
 		-- 诊断导航
 		map("n", "[d", function()
 			vim.diagnostic.jump({
 				count = -1,
-				on_jump = show_jump_diagnostic,
+				on_jump = function(diagnostic, jump_bufnr)
+					-- on_jump 只在真的跳到诊断时打开浮窗，避免无诊断时弹空窗口。
+					if diagnostic then
+						show_diagnostic_float(jump_bufnr)
+					end
+				end,
 			})
 		end, "Diagnostic: Previous")
 
 		map("n", "]d", function()
 			vim.diagnostic.jump({
 				count = 1,
-				on_jump = show_jump_diagnostic,
+				on_jump = function(diagnostic, jump_bufnr)
+					-- 保留原来“跳转后立即看到诊断内容”的使用习惯。
+					if diagnostic then
+						show_diagnostic_float(jump_bufnr)
+					end
+				end,
 			})
 		end, "Diagnostic: Next")
 
 		map("n", "<leader>xd", function()
-			vim.diagnostic.open_float(nil, {
-				border = "rounded",
-				source = "if_many",
-				focusable = false,
-			})
+			show_diagnostic_float(bufnr)
 		end, "Diagnostic: Show line diagnostic")
 	end
 end
