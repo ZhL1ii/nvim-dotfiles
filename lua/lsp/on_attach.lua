@@ -12,6 +12,17 @@ function M.get()
 			})
 		end
 
+		local show_jump_diagnostic = function(diagnostic, jump_bufnr)
+			if not diagnostic then
+				return
+			end
+
+			vim.diagnostic.open_float({
+				bufnr = jump_bufnr,
+				scope = "cursor",
+			})
+		end
+
 		-- 跳转与查看
 		map("n", "gd", vim.lsp.buf.definition, "LSP: Go to definition")
 		map("n", "gD", vim.lsp.buf.declaration, "LSP: Go to declaration")
@@ -27,14 +38,14 @@ function M.get()
 		map("n", "[d", function()
 			vim.diagnostic.jump({
 				count = -1,
-				float = true,
+				on_jump = show_jump_diagnostic,
 			})
 		end, "Diagnostic: Previous")
 
 		map("n", "]d", function()
 			vim.diagnostic.jump({
 				count = 1,
-				float = true,
+				on_jump = show_jump_diagnostic,
 			})
 		end, "Diagnostic: Next")
 
