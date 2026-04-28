@@ -16,7 +16,7 @@ return {
 			},
 
 			hide_cursor = true,
-			stop_eof = true,
+			stop_eof = false,
 			respect_scrolloff = false,
 			cursor_scrolls_alone = true,
 			duration_multiplier = 1.0,
