@@ -34,6 +34,16 @@ local function open_with_default_app(state)
 	end
 end
 
+local function refresh_neotree_git_status()
+	local ok, manager = pcall(require, "neo-tree.sources.manager")
+	if not ok then
+		return
+	end
+
+	manager.refresh("filesystem")
+	manager.refresh("git_status")
+end
+
 return {
 	{
 		"nvim-neo-tree/neo-tree.nvim",
@@ -47,6 +57,12 @@ return {
 		keys = {
 			{ "<leader>e", "<cmd>Neotree toggle filesystem reveal left<cr>", desc = "Explore: Toggle file tree" },
 		},
+		init = function()
+			vim.api.nvim_create_autocmd({ "FocusGained", "TermClose" }, {
+				group = vim.api.nvim_create_augroup("UserNeoTreeGitRefresh", { clear = true }),
+				callback = refresh_neotree_git_status,
+			})
+		end,
 		opts = {
 			commands = {
 				open_with_default_app = open_with_default_app,
