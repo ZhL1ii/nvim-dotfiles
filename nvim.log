@@ -22,3 +22,6 @@ WRN 2026-04-29T12:51:23.578 ?.32659    server_start:197: Failed to start server:
 WRN 2026-04-29T12:51:30.901 ?.32690    server_start:197: Failed to start server: operation not permitted: /var/folders/h1/00hwpwlx2zx5mj7x_m77t4500000gn/T/nvim.chie/qg3hvQ/nvim.32690.0
 WRN 2026-04-29T12:51:46.250 ?.32731    server_start:197: Failed to start server: operation not permitted: /var/folders/h1/00hwpwlx2zx5mj7x_m77t4500000gn/T/nvim.chie/MKi6a8/nvim.32731.0
 WRN 2026-04-29T12:51:56.837 ?.32802    server_start:197: Failed to start server: operation not permitted: /var/folders/h1/00hwpwlx2zx5mj7x_m77t4500000gn/T/nvim.chie/jNnGou/nvim.32802.0
+WRN 2026-04-30T13:31:54.992 ?.93196    server_start:197: Failed to start server: operation not permitted: /var/folders/h1/00hwpwlx2zx5mj7x_m77t4500000gn/T/nvim.chie/SYgxsp/nvim.93196.0
+WRN 2026-04-30T13:41:09.360 ?.802      server_start:197: Failed to start server: operation not permitted: /var/folders/h1/00hwpwlx2zx5mj7x_m77t4500000gn/T/nvim.chie/gtkny6/nvim.802.0
+WRN 2026-04-30T13:41:26.166 ?.935      server_start:197: Failed to start server: operation not permitted: /var/folders/h1/00hwpwlx2zx5mj7x_m77t4500000gn/T/nvim.chie/zlTYKn/nvim.935.0

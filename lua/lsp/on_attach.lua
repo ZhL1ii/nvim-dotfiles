@@ -20,6 +20,43 @@ function M.get()
 			})
 		end
 
+		local apply_code_action = function(only)
+			vim.lsp.buf.code_action({
+				context = {
+					only = only,
+					diagnostics = vim.diagnostic.get(bufnr),
+				},
+				apply = true,
+			})
+		end
+
+		local fix_formatters_by_ft = {
+			javascript = { "eslint_d", "prettier" },
+			javascriptreact = { "eslint_d", "prettier" },
+			typescript = { "eslint_d", "prettier" },
+			typescriptreact = { "eslint_d", "prettier" },
+			python = { "ruff_fix", "ruff_organize_imports", "black" },
+		}
+
+		local run_external_fixers = function()
+			local formatters = fix_formatters_by_ft[vim.bo[bufnr].filetype]
+			if not formatters then
+				return
+			end
+
+			local ok, conform = pcall(require, "conform")
+			if not ok then
+				return
+			end
+
+			conform.format({
+				bufnr = bufnr,
+				async = true,
+				formatters = formatters,
+				lsp_format = "never",
+			})
+		end
+
 		-- 跳转与查看
 		map("n", "gd", vim.lsp.buf.definition, "LSP: Go to definition")
 		map("n", "gD", vim.lsp.buf.declaration, "LSP: Go to declaration")
@@ -30,6 +67,16 @@ function M.get()
 		-- 重构与动作
 		map("n", "<leader>cr", vim.lsp.buf.rename, "LSP: Rename")
 		map({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, "LSP: Code action")
+		map("n", "<leader>cq", function()
+			apply_code_action({ "quickfix" })
+		end, "LSP: Quick fix")
+		map("n", "<leader>co", function()
+			apply_code_action({ "source.organizeImports" })
+		end, "LSP: Organize imports")
+		map("n", "<leader>cF", function()
+			apply_code_action({ "source.fixAll", "source.organizeImports" })
+			run_external_fixers()
+		end, "LSP: Fix all")
 		-- Neovim 0.12 提供内置 :lsp 管理命令，方便在当前 buffer 重启/停止 server。
 		map("n", "<leader>cR", "<cmd>lsp restart<cr>", "LSP: Restart")
 		map("n", "<leader>cS", "<cmd>lsp stop<cr>", "LSP: Stop")
