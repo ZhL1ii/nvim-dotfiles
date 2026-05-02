@@ -80,6 +80,7 @@ return {
 			window = {
 				width = 30,
 				mappings = {
+					["bs"] = "noop",
 					["<C-o>"] = "open_with_default_app",
 					["l"] = "open",
 					["h"] = "close_node",

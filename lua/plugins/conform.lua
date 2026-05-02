@@ -17,7 +17,6 @@ return {
 				typescriptreact = { "prettier" },
 				json = { "prettier" },
 				yaml = { "prettier" },
-				markdown = { "prettier" },
 			},
 
 			formatters = {

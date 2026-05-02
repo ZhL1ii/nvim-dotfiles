@@ -1,7 +1,6 @@
--- UI、主题
 if vim.g.neovide then
 	vim.g.neovide_theme = "dark"
-	vim.g.guifont = "JetBrainsMono Nerd Font:h15"
+	vim.o.guifont = "JetBrainsMono Nerd Font Mono:h15"
 end
 
 vim.o.background = "dark"

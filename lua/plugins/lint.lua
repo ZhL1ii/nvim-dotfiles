@@ -11,7 +11,6 @@ return {
 				require("lint.eslint_d"),
 				require("lint.shellcheck"),
 				require("lint.yamllint"),
-				require("lint.markdownlint_cli2"),
 				require("lint.checkstyle"),
 				require("lint.golangcilint"),
 				require("lint.clangtidy"),

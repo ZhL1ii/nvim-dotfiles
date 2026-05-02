@@ -56,7 +56,6 @@ return {
 				"golangci-lint",
 				"shellcheck",
 				"yamllint",
-				"markdownlint-cli2",
 
 				-- Java linter
 				"checkstyle",

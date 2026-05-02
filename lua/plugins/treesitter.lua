@@ -12,6 +12,11 @@ return {
 	build = ":TSUpdate",
 
 	config = function()
+		local markdown_langs = {
+			markdown = true,
+			markdown_inline = true,
+		}
+
 		require("nvim-treesitter.configs").setup({
 			-- 这里写需要有语法树支持的语言。
 			-- parser 名称不一定等于 filetype，例如 vimdoc 是帮助文档 parser。
@@ -45,8 +50,14 @@ return {
 				-- Tree-sitter 的核心能力：用语法树做高亮，比传统 regex 高亮更准确。
 				enable = true,
 
-				-- 大文件解析成本高，这里超过 200KB 就关闭 Treesitter 高亮，避免卡顿。
-				disable = function(_, buf)
+				-- Markdown 在 Neovim 0.12.x 上可能触发 runtime highlighter 的 range nil 错误。
+				-- 先让 Markdown 回退到内置语法高亮，其他语言继续使用 Treesitter。
+				-- 大文件解析成本高，这里超过 200KB 也关闭 Treesitter 高亮，避免卡顿。
+				disable = function(lang, buf)
+					if markdown_langs[lang] then
+						return true
+					end
+
 					local max_filesize = 200 * 1024
 					local ok, stats = pcall(vim.uv.fs_stat, vim.api.nvim_buf_get_name(buf))
 					return ok and stats and stats.size > max_filesize
@@ -54,7 +65,7 @@ return {
 
 				-- false 表示不叠加 Vim 传统正则高亮，避免重复高亮和性能损耗。
 				-- 少数语言如果高亮缺失，可以改成 { "language_name" } 只对该语言叠加。
-				additional_vim_regex_highlighting = false,
+				additional_vim_regex_highlighting = { "markdown" },
 			},
 
 			indent = {
@@ -63,7 +74,7 @@ return {
 
 				-- Python/YAML 对缩进非常敏感，Treesitter 缩进有时不如语言工具稳定。
 				-- 这里交给你的基础缩进设置、LSP 或 formatter 处理。
-				disable = { "python", "yaml" },
+				disable = { "markdown", "python", "yaml" },
 			},
 
 			incremental_selection = {
@@ -84,5 +95,15 @@ return {
 
 		-- 默认打开文件不自动折叠；需要时用 za/zc/zo 手动折叠即可。
 		vim.opt.foldenable = false
+
+		vim.api.nvim_create_autocmd("FileType", {
+			pattern = "markdown",
+			desc = "Disable Treesitter for Markdown to avoid parser edge cases",
+			callback = function()
+				pcall(vim.treesitter.stop, 0)
+				vim.opt_local.foldmethod = "manual"
+				vim.opt_local.foldexpr = "0"
+			end,
+		})
 	end,
 }
