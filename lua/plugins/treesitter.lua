@@ -17,6 +17,27 @@ return {
 			markdown_inline = true,
 		}
 
+		local function install_safe_get_node_text()
+			local get_node_text = vim.treesitter.get_node_text
+
+			vim.treesitter.get_node_text = function(node, source, opts)
+				local ok, text = pcall(get_node_text, node, source, opts)
+				if ok then
+					return text
+				end
+
+				if tostring(text):find("attempt to call method 'range' %(a nil value%)", 1, false) then
+					return ""
+				end
+
+				error(text)
+			end
+		end
+
+		-- Neovim 0.12.2 can hand markdown injection queries a node whose range is
+		-- unavailable, which breaks render-markdown.nvim through nvim-treesitter.
+		install_safe_get_node_text()
+
 		require("nvim-treesitter.configs").setup({
 			-- 这里写需要有语法树支持的语言。
 			-- parser 名称不一定等于 filetype，例如 vimdoc 是帮助文档 parser。

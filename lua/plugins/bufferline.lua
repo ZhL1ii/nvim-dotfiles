@@ -23,6 +23,19 @@ local function find_window_showing_buffer(bufnr)
 	end
 end
 
+local function has_multiple_regular_windows()
+	local count = 0
+	for _, winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+		if is_regular_buffer(vim.api.nvim_win_get_buf(winid)) then
+			count = count + 1
+			if count > 1 then
+				return true
+			end
+		end
+	end
+	return false
+end
+
 local function find_left_buffer(current_buf)
 	-- bufferline 维护了用户在顶部看到的 buffer 顺序。直接用 nvim_list_bufs()
 	-- 只能拿到 Neovim 内部顺序，和界面上从左到右的顺序不一定一致。
@@ -53,11 +66,27 @@ local function find_left_buffer(current_buf)
 	end
 end
 
+local function list_regular_buffers(exclude_buf)
+	local buffers = {}
+	for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+		if bufnr ~= exclude_buf and is_regular_buffer(bufnr) then
+			table.insert(buffers, bufnr)
+		end
+	end
+	return buffers
+end
+
 local function delete_buffer(bufnr)
 	local current_win = vim.api.nvim_get_current_win()
 	local current_buf = bufnr or vim.api.nvim_get_current_buf()
 
 	if not is_regular_buffer(current_buf) then
+		return
+	end
+
+	-- 分屏里的当前 buffer 关闭时只关闭当前窗口，避免把窗口切到左侧 buffer。
+	if current_buf == vim.api.nvim_win_get_buf(current_win) and has_multiple_regular_windows() then
+		vim.api.nvim_win_close(current_win, false)
 		return
 	end
 
@@ -92,6 +121,48 @@ local function delete_current_buffer()
 	delete_buffer()
 end
 
+local function delete_buffers(buffers)
+	for _, bufnr in ipairs(buffers) do
+		if vim.api.nvim_buf_is_valid(bufnr) then
+			if vim.bo[bufnr].modified then
+				pcall(vim.cmd, "bdelete " .. bufnr)
+			else
+				pcall(vim.api.nvim_buf_delete, bufnr, {})
+			end
+		end
+	end
+end
+
+local function delete_other_buffers()
+	local current_buf = vim.api.nvim_get_current_buf()
+	local buffers = list_regular_buffers(current_buf)
+
+	for _, winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+		local win_buf = vim.api.nvim_win_get_buf(winid)
+		if win_buf ~= current_buf and is_regular_buffer(win_buf) then
+			vim.api.nvim_win_set_buf(winid, current_buf)
+		end
+	end
+
+	delete_buffers(buffers)
+end
+
+local function delete_all_buffers()
+	local buffers = list_regular_buffers()
+	if #buffers == 0 then
+		return
+	end
+
+	local placeholder = vim.api.nvim_create_buf(true, false)
+	for _, winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+		if is_regular_buffer(vim.api.nvim_win_get_buf(winid)) then
+			vim.api.nvim_win_set_buf(winid, placeholder)
+		end
+	end
+
+	delete_buffers(buffers)
+end
+
 return {
 	"akinsho/bufferline.nvim",
 	dependencies = {
@@ -120,6 +191,8 @@ return {
 		{ "<S-l>", ":BufferLineCycleNext<CR>", desc = "Buffer: Next", silent = true },
 		{ "<leader>bp", ":BufferLinePick<CR>", desc = "Buffer: Pick", silent = true },
 		{ "<leader>bd", delete_current_buffer, desc = "Buffer: Delete", silent = true },
+		{ "<leader>bo", delete_other_buffers, desc = "Buffer: Delete Others", silent = true },
+		{ "<leader>ba", delete_all_buffers, desc = "Buffer: Delete All", silent = true },
 	},
 	lazy = false,
 }
