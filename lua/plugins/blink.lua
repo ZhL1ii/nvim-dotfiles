@@ -1,12 +1,50 @@
 return {
 	{
 		"saghen/blink.cmp",
-		version = "*",
+		version = "1.*",
 		dependencies = {
 			"rafamadriz/friendly-snippets",
 		},
 
 		opts = {
+
+			appearance = {
+				nerd_font_variant = "mono",
+			},
+
+			completion = {
+				documentation = {
+					auto_show = true,
+				},
+
+				menu = {
+					auto_show = true,
+					scrollbar = false,
+					border = "rounded",
+
+					-- 弹窗内容：显示补全源
+					draw = {
+						columns = {
+							{ "kind_icon" },
+							{ "label", "label_description", gap = 1 },
+							{ "source_name" },
+						},
+					},
+				},
+			},
+
+			sources = {
+				default = { "lsp", "path", "snippets", "buffer" },
+			},
+
+			signature = {
+				enabled = true,
+			},
+
+			fuzzy = {
+				implementation = "prefer_rust_with_warning",
+			},
+
 			keymap = {
 				preset = "none",
 
@@ -35,28 +73,6 @@ return {
 
 				-- 手动显示 / 关闭签名提示
 				["<C-]>"] = { "show_signature", "hide_signature", "fallback" },
-			},
-
-			appearance = {
-				nerd_font_variant = "mono",
-			},
-
-			completion = {
-				documentation = {
-					auto_show = true,
-				},
-			},
-
-			sources = {
-				default = { "lsp", "path", "snippets", "buffer" },
-			},
-
-			signature = {
-				enabled = true,
-			},
-
-			fuzzy = {
-				implementation = "prefer_rust_with_warning",
 			},
 		},
 

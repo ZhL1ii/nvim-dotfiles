@@ -43,6 +43,17 @@ vim.api.nvim_create_autocmd("FileType", {
 	end,
 })
 
+-- C/C++ 编辑时使用 Vim 自带 cindent，未完成代码块里比 Treesitter indent 更稳定。
+vim.api.nvim_create_autocmd("FileType", {
+	pattern = { "c", "cpp", "objc", "objcpp" },
+	callback = function()
+		vim.opt_local.cindent = true
+		vim.opt_local.smartindent = false
+		vim.opt_local.indentexpr = ""
+		vim.opt_local.cinoptions = ":0,l1,t0,g0,(0,u0,W4"
+	end,
+})
+
 -- 2空格缩进语言
 vim.api.nvim_create_autocmd("FileType", {
 	pattern = { "lua", "javascript", "typescript", "json", "yaml", "markdown" },

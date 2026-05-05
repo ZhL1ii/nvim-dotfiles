@@ -1,167 +1,25 @@
-local function is_regular_buffer(bufnr)
-	return vim.api.nvim_buf_is_valid(bufnr)
-		and vim.bo[bufnr].buflisted
-		and vim.bo[bufnr].buftype == ""
-		and vim.bo[bufnr].filetype ~= "neo-tree"
-end
+local buffer = require("utils.buffer")
 
-local function find_regular_buffer(exclude_buf)
-	-- 当 bufferline 里找不到左侧 buffer 时，从 Neovim 的 buffer 列表里
-	-- 找一个仍然可用的普通文件 buffer，避免关闭当前 buffer 后停在无效页面。
-	for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
-		if bufnr ~= exclude_buf and is_regular_buffer(bufnr) then
-			return bufnr
-		end
-	end
-end
-
-local function find_window_showing_buffer(bufnr)
-	for _, winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-		if vim.api.nvim_win_get_buf(winid) == bufnr then
-			return winid
-		end
-	end
-end
-
-local function has_multiple_regular_windows()
-	local count = 0
-	for _, winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-		if is_regular_buffer(vim.api.nvim_win_get_buf(winid)) then
-			count = count + 1
-			if count > 1 then
-				return true
-			end
-		end
-	end
-	return false
-end
-
-local function find_left_buffer(current_buf)
-	-- bufferline 维护了用户在顶部看到的 buffer 顺序。直接用 nvim_list_bufs()
-	-- 只能拿到 Neovim 内部顺序，和界面上从左到右的顺序不一定一致。
-	local ok, bufferline = pcall(require, "bufferline")
-	if not ok then
+local function get_hl_color(group, attr)
+	local ok, hl = pcall(vim.api.nvim_get_hl, 0, { name = group, link = false })
+	if not ok or not hl or not hl[attr] then
 		return nil
 	end
 
-	-- get_elements() 返回 bufferline 当前展示顺序中的元素。
-	-- pcall 可以避免插件尚未加载或 API 出错时影响关闭 buffer 的主流程。
-	local ok_elements, result = pcall(bufferline.get_elements)
-	if not ok_elements or not result or not result.elements then
-		return nil
-	end
-
-	local left_buf
-	for _, element in ipairs(result.elements) do
-		local bufnr = element.id
-		if bufnr == current_buf then
-			-- 从左到右遍历时，left_buf 始终记录当前 buffer 左边最近的普通 buffer。
-			return left_buf
-		end
-
-		-- 只把普通文件 buffer 作为跳转目标，过滤 neo-tree、terminal、help 等特殊 buffer。
-		if is_regular_buffer(bufnr) then
-			left_buf = bufnr
-		end
-	end
+	return string.format("#%06x", hl[attr])
 end
 
-local function list_regular_buffers(exclude_buf)
-	local buffers = {}
-	for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
-		if bufnr ~= exclude_buf and is_regular_buffer(bufnr) then
-			table.insert(buffers, bufnr)
-		end
-	end
-	return buffers
-end
-
-local function delete_buffer(bufnr)
-	local current_win = vim.api.nvim_get_current_win()
-	local current_buf = bufnr or vim.api.nvim_get_current_buf()
-
-	if not is_regular_buffer(current_buf) then
-		return
-	end
-
-	-- 分屏里的当前 buffer 关闭时只关闭当前窗口，避免把窗口切到左侧 buffer。
-	if current_buf == vim.api.nvim_win_get_buf(current_win) and has_multiple_regular_windows() then
-		vim.api.nvim_win_close(current_win, false)
-		return
-	end
-
-	if vim.bo[current_buf].modified then
-		vim.cmd("bdelete " .. current_buf)
-		return
-	end
-
-	-- 先切换当前窗口的 buffer，再删除原 buffer。这样关闭后用户停留在当前窗口，
-	-- 并且目标页会按 bufferline 视觉顺序优先选择左侧第一个。
-	local target_buf = find_left_buffer(current_buf) or find_regular_buffer(current_buf)
-	local target_win = find_window_showing_buffer(current_buf)
-
-	if not target_win and vim.api.nvim_win_get_buf(current_win) == current_buf then
-		target_win = current_win
-	end
-
-	if target_win then
-		if target_buf then
-			vim.api.nvim_win_set_buf(target_win, target_buf)
-		else
-			-- 如果这是最后一个普通 buffer，就创建一个新的空 buffer，避免当前窗口没有内容。
-			local placeholder = vim.api.nvim_create_buf(true, false)
-			vim.api.nvim_win_set_buf(target_win, placeholder)
-		end
-	end
-
-	vim.api.nvim_buf_delete(current_buf, {})
-end
-
-local function delete_current_buffer()
-	delete_buffer()
-end
-
-local function delete_buffers(buffers)
-	for _, bufnr in ipairs(buffers) do
-		if vim.api.nvim_buf_is_valid(bufnr) then
-			if vim.bo[bufnr].modified then
-				pcall(vim.cmd, "bdelete " .. bufnr)
-			else
-				pcall(vim.api.nvim_buf_delete, bufnr, {})
-			end
-		end
-	end
-end
-
-local function delete_other_buffers()
-	local current_buf = vim.api.nvim_get_current_buf()
-	local buffers = list_regular_buffers(current_buf)
-
-	for _, winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-		local win_buf = vim.api.nvim_win_get_buf(winid)
-		if win_buf ~= current_buf and is_regular_buffer(win_buf) then
-			vim.api.nvim_win_set_buf(winid, current_buf)
-		end
-	end
-
-	delete_buffers(buffers)
-end
-
-local function delete_all_buffers()
-	local buffers = list_regular_buffers()
-	if #buffers == 0 then
-		return
-	end
-
-	local placeholder = vim.api.nvim_create_buf(true, false)
-	for _, winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-		if is_regular_buffer(vim.api.nvim_win_get_buf(winid)) then
-			vim.api.nvim_win_set_buf(winid, placeholder)
-		end
-	end
-
-	delete_buffers(buffers)
-end
+local colors = {
+	bg = "NONE",
+	fg = get_hl_color("Normal", "fg"),
+	fg_dark = get_hl_color("Comment", "fg"),
+	blue = get_hl_color("Directory", "fg"),
+	cyan = get_hl_color("DiagnosticInfo", "fg"),
+	green = get_hl_color("DiagnosticHint", "fg"),
+	orange = get_hl_color("DiagnosticWarn", "fg"),
+	red = get_hl_color("DiagnosticError", "fg"),
+	separator = get_hl_color("WinSeparator", "fg") or get_hl_color("VertSplit", "fg") or get_hl_color("Comment", "fg"),
+}
 
 return {
 	"akinsho/bufferline.nvim",
@@ -170,29 +28,114 @@ return {
 	},
 	opts = {
 		options = {
+			mode = "buffers",
+			numbers = "ordinal",
 			always_show_bufferline = true,
-			close_command = delete_buffer,
-			right_mouse_command = delete_buffer,
-			separator_style = "slant",
+
+			show_buffer_icons = true,
+			show_buffer_close_icons = false,
+			show_close_icon = false,
+			show_modified_icon = true,
+
+			diagnostics = "nvim_lsp",
+			separator_style = { "▕", "▕" },
+			indicator = {
+				style = "none",
+			},
+
+			close_command = buffer.delete,
+			right_mouse_command = buffer.delete,
+
 			offsets = {
 				{
 					filetype = "neo-tree",
-					text = "Files",
+					text = "󰙅 Files",
 					text_align = "center",
-					separator = true,
+					separator = false,
+					highlight = "BufferLineNeoTree",
 				},
+			},
+
+			max_name_length = 20,
+			max_prefix_length = 15,
+			truncate_names = true,
+			enforce_regular_tabs = true,
+			tab_size = 20,
+			sort_by = "insert_after_current",
+		},
+
+		highlights = {
+			fill = { bg = colors.bg },
+			background = { fg = colors.fg_dark, bg = colors.bg },
+
+			buffer_visible = { fg = colors.fg_dark, bg = colors.bg },
+			buffer_selected = {
+				fg = colors.blue,
+				bg = colors.bg,
+				bold = true,
+				italic = false,
+			},
+
+			numbers = { fg = colors.fg_dark, bg = colors.bg },
+			numbers_visible = { fg = colors.fg_dark, bg = colors.bg },
+			numbers_selected = {
+				fg = colors.blue,
+				bg = colors.bg,
+				bold = true,
+				italic = false,
+			},
+
+			separator = { fg = colors.separator, bg = colors.bg },
+			separator_visible = { fg = colors.separator, bg = colors.bg },
+			separator_selected = { fg = colors.separator, bg = colors.bg },
+
+			indicator_selected = { fg = colors.bg, bg = colors.bg },
+
+			modified = { fg = colors.orange, bg = colors.bg },
+			modified_visible = { fg = colors.orange, bg = colors.bg },
+			modified_selected = {
+				fg = colors.orange,
+				bg = colors.bg,
+				bold = false,
+			},
+
+			error = { fg = colors.red, bg = colors.bg },
+			error_selected = { fg = colors.red, bg = colors.bg, bold = false },
+
+			warning = { fg = colors.orange, bg = colors.bg },
+			warning_selected = { fg = colors.orange, bg = colors.bg, bold = false },
+
+			info = { fg = colors.cyan, bg = colors.bg },
+			info_selected = { fg = colors.cyan, bg = colors.bg, bold = false },
+
+			hint = { fg = colors.green, bg = colors.bg },
+			hint_selected = { fg = colors.green, bg = colors.bg, bold = false },
+
+			pick = { fg = colors.red, bg = colors.bg, bold = false },
+			pick_selected = { fg = colors.red, bg = colors.bg, bold = false },
+
+			BufferLineNeoTree = {
+				fg = colors.blue,
+				bg = colors.bg,
+				bold = true,
 			},
 		},
 	},
+
 	keys = {
-		{ "<leader>bh", ":BufferLineCyclePrev<CR>", desc = "Buffer: Previous", silent = true },
-		{ "<S-h>", ":BufferLineCyclePrev<CR>", desc = "Buffer: Previous", silent = true },
-		{ "<leader>bl", ":BufferLineCycleNext<CR>", desc = "Buffer: Next", silent = true },
-		{ "<S-l>", ":BufferLineCycleNext<CR>", desc = "Buffer: Next", silent = true },
-		{ "<leader>bp", ":BufferLinePick<CR>", desc = "Buffer: Pick", silent = true },
-		{ "<leader>bd", delete_current_buffer, desc = "Buffer: Delete", silent = true },
-		{ "<leader>bo", delete_other_buffers, desc = "Buffer: Delete Others", silent = true },
-		{ "<leader>ba", delete_all_buffers, desc = "Buffer: Delete All", silent = true },
+		{ "<leader>bh", "<cmd>BufferLineCyclePrev<CR>", desc = "Buffer: Previous", silent = true },
+		{ "<S-h>", "<cmd>BufferLineCyclePrev<CR>", desc = "Buffer: Previous", silent = true },
+
+		{ "<leader>bl", "<cmd>BufferLineCycleNext<CR>", desc = "Buffer: Next", silent = true },
+		{ "<S-l>", "<cmd>BufferLineCycleNext<CR>", desc = "Buffer: Next", silent = true },
+
+		{ "<leader>bp", "<cmd>BufferLinePick<CR>", desc = "Buffer: Pick", silent = true },
+
+		{ "<leader>bd", buffer.delete_current, desc = "Buffer: Delete", silent = true },
+		{ "<leader>bD", buffer.force_delete_current, desc = "Buffer: Force Delete", silent = true },
+		{ "<leader>bo", buffer.delete_others, desc = "Buffer: Delete Others", silent = true },
+		{ "<leader>ba", buffer.delete_all, desc = "Buffer: Delete All", silent = true },
 	},
+
 	lazy = false,
 }

@@ -19,7 +19,7 @@ opt.splitright = true
 opt.splitbelow = true
 
 -- 交互
-opt.scrolloff = 20
+opt.scrolloff = 12
 opt.sidescrolloff = 30
 opt.mouse = "a"
 opt.clipboard = "unnamedplus"

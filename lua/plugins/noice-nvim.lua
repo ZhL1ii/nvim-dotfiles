@@ -39,6 +39,20 @@ return {
 			lsp_doc_border = true,
 		},
 
+		views = {
+			cmdline_popup = {
+				position = {
+					row = "35%",
+					col = "50%",
+				},
+			},
+			cmdline_popupmenu = {
+				position = {
+					col = "auto",
+				},
+			},
+		},
+
 		popupmenu = {
 			enabled = true,
 			backend = "nui",

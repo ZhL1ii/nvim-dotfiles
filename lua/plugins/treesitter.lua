@@ -94,8 +94,9 @@ return {
 				enable = true,
 
 				-- Python/YAML 对缩进非常敏感，Treesitter 缩进有时不如语言工具稳定。
+				-- C/C++ 使用 Vim 自带 cindent，未完成代码块里回车缩进更可靠。
 				-- 这里交给你的基础缩进设置、LSP 或 formatter 处理。
-				disable = { "markdown", "python", "yaml" },
+				disable = { "c", "cpp", "markdown", "python", "yaml" },
 			},
 
 			incremental_selection = {
