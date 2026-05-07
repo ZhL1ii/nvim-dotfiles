@@ -3,8 +3,6 @@ if vim.g.neovide then
 	vim.o.guifont = "JetBrainsMono Nerd Font Mono:h15"
 end
 
-vim.o.background = "dark"
-
 -- 缩放字体
 if vim.g.neovide then
 	vim.g.neovide_scale_factor = 1.0
