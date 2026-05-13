@@ -4,6 +4,7 @@ local keymap = vim.keymap
 keymap.set({ "n", "v" }, "<Space>", "<Nop>", { silent = true })
 
 keymap.set("n", "<leader>w", "<cmd>w<CR>", { desc = "Save file", silent = true })
+keymap.set("n", "<leader>h", "<cmd>nohlsearch<CR>", { desc = "Clear search highlight", silent = true })
 keymap.set("n", "<leader>qq", "<cmd>q<CR>", { desc = "Quit" })
 keymap.set("n", "<leader>qQ", "<cmd>qall<CR>", { desc = "Quit All" })
 keymap.set("n", "<leader>L", "<cmd>Lazy<CR>", { desc = "Lazy", silent = true })

@@ -9,7 +9,7 @@ local themes = {
 	},
 }
 
-local current_theme = "moon"
+local current_theme = "day"
 
 -- 先注释掉随系统切换，暂时禁用
 -- local function get_system_theme()

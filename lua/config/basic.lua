@@ -23,3 +23,10 @@ opt.scrolloff = 12
 opt.sidescrolloff = 30
 opt.mouse = "a"
 opt.clipboard = "unnamedplus"
+
+-- 光标闪烁
+vim.opt.guicursor = {
+	"n-v-c:block-blinkwait200-blinkon250-blinkoff250",
+	"i-ci-ve:ver25-blinkwait200-blinkon250-blinkoff250",
+	"r-cr:hor20-blinkwait200-blinkon250-blinkoff250",
+}

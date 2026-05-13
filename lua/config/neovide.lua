@@ -1,6 +1,6 @@
 if vim.g.neovide then
 	vim.g.neovide_theme = "dark"
-	vim.o.guifont = "JetBrainsMono Nerd Font Mono:h15"
+	vim.o.guifont = "Lilex Nerd Font Mono:h16"
 end
 
 -- 缩放字体
