@@ -28,6 +28,28 @@ local function dashboard_find_text()
 	end)
 end
 
+local function get_hl_color(name, attr)
+	local ok, hl = pcall(vim.api.nvim_get_hl, 0, { name = name, link = false })
+	if not ok or not hl or not hl[attr] then
+		return nil
+	end
+
+	return string.format("#%06x", hl[attr])
+end
+
+local function set_dashboard_highlights()
+	local accent = get_hl_color("Directory", "fg") or "#2e7de9"
+	local button = get_hl_color("Function", "fg") or accent
+	local footer = get_hl_color("Comment", "fg") or accent
+	local shortcut = get_hl_color("DiagnosticWarn", "fg") or "#8c6c3e"
+
+	vim.api.nvim_set_hl(0, "DashboardHeader", { fg = accent })
+	vim.api.nvim_set_hl(0, "DashboardAccent", { fg = button })
+	vim.api.nvim_set_hl(0, "DashboardButton", { fg = button })
+	vim.api.nvim_set_hl(0, "DashboardFooter", { fg = footer })
+	vim.api.nvim_set_hl(0, "DashboardShortcut", { fg = shortcut, bold = true })
+end
+
 -- 提前注册命令，保证 dashboard 按钮在 alpha 懒加载前后都能调用。
 vim.api.nvim_create_user_command("DashboardFindFile", dashboard_find_file, {})
 vim.api.nvim_create_user_command("DashboardFindText", dashboard_find_text, {})
@@ -41,11 +63,7 @@ return {
 	opts = function()
 		local dashboard = require("alpha.themes.dashboard")
 
-		vim.api.nvim_set_hl(0, "DashboardHeader", { fg = "#82aaff" })
-		vim.api.nvim_set_hl(0, "DashboardAccent", { fg = "#86e1fc" })
-		vim.api.nvim_set_hl(0, "DashboardButton", { fg = "#86e1fc" })
-		vim.api.nvim_set_hl(0, "DashboardFooter", { fg = "#65bcff" })
-		vim.api.nvim_set_hl(0, "DashboardShortcut", { fg = "#ff966c" })
+		set_dashboard_highlights()
 
 		local function button(shortcut, icon, label, command)
 			local item = dashboard.button(shortcut, icon .. "  " .. label, command)
@@ -110,6 +128,11 @@ return {
 	end,
 	config = function(_, dashboard)
 		require("alpha").setup(dashboard.config)
+
+		vim.api.nvim_create_autocmd("ColorScheme", {
+			group = vim.api.nvim_create_augroup("DashboardColors", { clear = true }),
+			callback = set_dashboard_highlights,
+		})
 
 		local dashboard_group = vim.api.nvim_create_augroup("DashboardTabline", { clear = true })
 		local previous_showtabline
