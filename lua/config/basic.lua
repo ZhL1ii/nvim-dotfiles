@@ -30,3 +30,8 @@ vim.opt.guicursor = {
 	"i-ci-ve:ver25-blinkwait200-blinkon250-blinkoff250",
 	"r-cr:hor20-blinkwait200-blinkon250-blinkoff250",
 }
+
+-- 空白行
+opt.fillchars:append({
+	eob = " ",
+})

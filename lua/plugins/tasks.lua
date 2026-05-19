@@ -21,7 +21,7 @@ local function run_task()
 	-- 使用 Overseer 的任务选择器，自动识别 npm、make、cargo、.vscode/tasks.json 等任务。
 	overseer.run_task({}, function(task)
 		if task then
-			-- 记录最近任务，供 <leader>tR 重跑和 <leader>tq 停止使用。
+			-- 记录最近任务，供 <leader>rR 重跑和 <leader>rq 停止使用。
 			last_task_id = task.id
 			-- 任务启动后自动打开底部列表，但不抢走当前编辑窗口焦点。
 			overseer.open({ direction = "bottom", enter = false })
@@ -93,17 +93,17 @@ return {
 	},
 	keys = {
 		-- 从项目可识别任务中选择，例如 npm scripts、make、cargo、vscode tasks。
-		{ "<leader>tr", run_task, desc = "Task: Run" },
+		{ "<leader>rr", run_task, desc = "Run: Task" },
 		-- 手动输入一条命令并作为 Overseer 任务运行。
-		{ "<leader>tc", run_shell_task, desc = "Task: Command" },
+		{ "<leader>rc", run_shell_task, desc = "Run: Command" },
 		-- 打开任务列表，查看任务状态、退出码和输出。
-		{ "<leader>to", "<cmd>OverseerToggle bottom<cr>", desc = "Task: Toggle list" },
+		{ "<leader>ro", "<cmd>OverseerToggle bottom<cr>", desc = "Run: Toggle list" },
 		-- 对当前选中的任务执行操作，例如 restart、stop、open output。
-		{ "<leader>ta", "<cmd>OverseerTaskAction<cr>", desc = "Task: Action" },
+		{ "<leader>ra", "<cmd>OverseerTaskAction<cr>", desc = "Run: Action" },
 		-- 快速重跑最近一次任务，适合反复执行 build/test。
-		{ "<leader>tR", restart_last_task, desc = "Task: Restart last" },
+		{ "<leader>rR", restart_last_task, desc = "Run: Restart last" },
 		-- 快速停止最近一次任务，适合停止 dev server 或 watch。
-		{ "<leader>tq", stop_last_task, desc = "Task: Stop last" },
+		{ "<leader>rq", stop_last_task, desc = "Run: Stop last" },
 	},
 	opts = {
 		-- 任务输出使用 terminal buffer，适合保留颜色和交互式命令输出。

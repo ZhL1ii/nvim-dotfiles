@@ -15,8 +15,9 @@ return {
 			{ "<leader>f", group = "Find" },
 			{ "<leader>g", group = "Git" },
 			{ "<leader>l", group = "Lint" },
-			{ "<leader>q", group = "Quit/Session" },
-			{ "<leader>t", group = "Test/Terminal/Task" },
+			{ "<leader>q", group = "Quit" },
+			{ "<leader>r", group = "Run" },
+			{ "<leader>t", group = "Terminal" },
 			{ "<leader>x", group = "Diagnostics" },
 		},
 

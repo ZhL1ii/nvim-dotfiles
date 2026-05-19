@@ -16,7 +16,6 @@ return {
 		bypass_save_filetype = {
 			"alpha",
 			"dashboard",
-			"sancks_dashboard",
 		},
 	},
 }
